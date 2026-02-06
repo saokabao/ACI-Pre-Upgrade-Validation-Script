@@ -134,6 +134,7 @@ Items                                         | Faults         | This Script    
 [Service Graph BD Forceful Routing][c22]              | :white_check_mark: | :no_entry_sign:
 [AVE End-of-life][c23]                                | :white_check_mark: | :no_entry_sign:
 [Shared Service with vzAny Consumer][c24]             | :white_check_mark: | :no_entry_sign:
+[Nutanix Microsegmentation Custom Name Field][c25]    | :white_check_mark: | :no_entry_sign:
 
 
 [c1]: #vpc-paired-leaf-switches
@@ -160,6 +161,7 @@ Items                                         | Faults         | This Script    
 [c22]: #service-graph-bd-forceful-routing
 [c23]: #ave-end-of-life
 [c24]: #shared-service-with-vzany-consumer
+[c25]: #nutanix-microsegmentation-custom-name-field
 
 ### Defect Condition Checks
 
@@ -2265,6 +2267,10 @@ See [Inter-VRF contract with vzAny as the consumer][60] in Cisco ACI Contract Gu
 
 See [Enable Policy Compression in Cisco ACI Contract Guide][61] for details about Policy Compression.
 
+### Nutanix Microsegmentation Custom Name Field
+Starting in ACI 6.2(2), APIC uses `customEpgName` (fvAEPg) and `customTagValue` (fvESg) to create tags and security policy in Prism Central. In versions earlier than 6.2(2), base EPGs can have `customEpgName` configured but it is **not used** for tag creation, and uSeg EPGs/ESGs do **not** support custom-name fields. If these fields are configured and you downgrade below 6.2(2), policy creation & tag assignment can become inconsistent. To avoid issues, clear these fields on base EPGs, uSeg EPGs, and ESGs created in 6.2(2) or higher, used with Nutanix integration before a downgrade to < 6.2(2).
+
+See [Cisco ACI and Nutanix AHV Integration][62] for details about this feature.
 
 ## Defect Check Details
 
@@ -2710,3 +2716,4 @@ If any instances of `configpushShardCont` are flagged by this script, Cisco TAC 
 [59]: https://bst.cloudapps.cisco.com/bugsearch/bug/CSCwp95515
 [60]: https://www.cisco.com/c/en/us/solutions/collateral/data-center-virtualization/application-centric-infrastructure/white-paper-c11-743951.html#Inter
 [61]: https://www.cisco.com/c/en/us/solutions/collateral/data-center-virtualization/application-centric-infrastructure/white-paper-c11-743951.html#EnablePolicyCompression
+[62]: https://www.cisco.com/c/en/us/td/docs/dcn/aci/apic/kb/cisco-aci-nutanix-integration.html#c-microsegmentation-nutanix-vmm-domain

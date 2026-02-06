@@ -4779,6 +4779,78 @@ def lldp_custom_int_description_defect_check(tversion, **kwargs):
 
     return Result(result=result, headers=headers, data=data, recommended_action=recommended_action, doc_url=doc_url)
 
+@check_wrapper(check_title="Nutanix microsegmentation custom tag value check")
+def nutanix_microsegmentation_custom_epg_name_check(cversion, tversion, **kwargs):
+    if not tversion or not cversion:
+        return Result(result=MANUAL, msg=TVER_MISSING)
+    
+    to_validate = False
+    if (cversion.same_as("6.2(2a)") or cversion.newer_than("6.2(2a)")) and tversion.older_than("6.2(2a)"):
+        to_validate = True
+
+    if not to_validate:
+        return Result(result=NA, msg=VER_NOT_AFFECTED)
+    
+    result = PASS
+    headers = ["DN", "Vmm Domain", "customEpgName", "customTagValue"]
+    data = []
+    recommended_action = (
+        "Clear customEpgName/customTagValue on objects used with Nutanix before downgrading below 6.2(2)."
+    )
+    doc_url = (
+        "https://datacenter.github.io/ACI-Pre-Upgrade-Validation-Script/validations#nutanix-microsegmentation-custom-name-field"
+    )
+
+    esg_regex = r"uni/tn-(?P<tenant>[^/]+)/ap-(?P<ap>[^/]+)/esg-(?P<esg>[^/]+)"
+    comp_eppd_regex = r"^comp/prov-Nutanix/ctrlr-\[(?P<dom>[^\]]+)\]-[^/]+/eppd-\[uni/tn-(?P<tenant>[^/]+)/ap-(?P<ap>[^/]+)/epg-(?P<epg>[^\]]+)\]$"
+
+    try:
+        compeppd_api = 'compEpPD.json'
+        compeppd_api += '?query-target-filter=and(wcard(compEpPD.dn,"Nutanix"),ne(compEpPD.customEpgName,""),eq(compEpPD.configFlags,""))'
+        compeppd_mos = icurl('class', compeppd_api)
+
+        fvesg_api = 'fvESg.json'
+        fvesg_api += '?query-target-filter=and(ne(fvESg.customTagValue,""))'
+        fvesg_mos = icurl('class', fvesg_api)
+    except Exception as e:
+        return Result(result=ERROR, msg="Failed to query Nutanix microsegmentation data: {}".format(e))
+
+    if compeppd_mos:
+        result = FAIL_O
+        for mo in compeppd_mos:
+            dn = mo['compEpPD']['attributes']['dn']
+            match = re.search(comp_eppd_regex, dn)
+            m = re.search(r'ctrlr-\[(?P<dom>[^\]]+)\]', dn)
+            dom_name = m.group("dom") if m else ""
+            if not match:
+                continue
+            epgPKey = mo['compEpPD']['attributes']['epgPKey']
+            data.append([epgPKey,
+                dom_name,
+                mo['compEpPD']['attributes']['customEpgName'],
+                ""
+            ])
+
+    if fvesg_mos:
+        result = FAIL_O
+        for mo in fvesg_mos:
+            dn = mo['fvESg']['attributes']['dn']
+            match = re.search(esg_regex, dn)
+            tenant = match.group("tenant") if match else ""
+            esg = match.group("esg") if match else ""
+            data.append([dn,
+                "",
+                "",
+                mo['fvESg']['attributes']['customTagValue']
+            ])
+
+    return Result(
+        result=result,
+        headers=headers,
+        data=data,
+        recommended_action=recommended_action,
+        doc_url=doc_url,
+    )
 
 @check_wrapper(check_title='Unsupported FEC Configuration For N9K-C93180YC-EX')
 def unsupported_fec_configuration_ex_check(sw_cversion, tversion, **kwargs):
@@ -6161,6 +6233,7 @@ class CheckManager:
         service_bd_forceful_routing_check,
         ave_eol_check,
         consumer_vzany_shared_services_check,
+        nutanix_microsegmentation_custom_epg_name_check,
 
         # Bugs
         ep_announce_check,

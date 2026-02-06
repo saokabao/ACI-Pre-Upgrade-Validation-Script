@@ -1,0 +1,15 @@
+{
+  "imdata": [
+    {
+      "compEpPD": {
+        "attributes": {
+          "dn": "comp/prov-Nutanix/ctrlr-[dom_12_13]-bglvc4/eppd-[uni/tn-useg/ap-webapp/epg-NUCLEAR3]",
+          "customEpgName": "NUCLEAR3",
+          "epgPKey": "uni/tn-useg/ap-webapp/epg-NUCLEAR3",
+          "configFlags": ""
+        }
+      }
+    }
+  ],
+  "totalCount": "1"
+}
